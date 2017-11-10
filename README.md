@@ -104,7 +104,7 @@ distance = recognizer.compareFeatures(features[0], features[1])
 
 ### 1.7 Static Method: convert distance to score
 
-Convert the distance of two cow head features to score in [0,100]
+Convert the distance of two cow head features to score in [0,100], the higher the similar.
 
 ```python
 score = CowRecognizer.convert2Score(distance, thredhold=1.0)
