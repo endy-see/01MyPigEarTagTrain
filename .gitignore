@@ -1,0 +1,8 @@
+assets
+uploads
+.vscode
+.idea/*
+.DS_Store
+.DS_Store/*
+*.pyc
+*.so

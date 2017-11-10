@@ -1,0 +1,13 @@
+detector:
+  config_file_path: 'assets/cow_detector_faster_rcnn_mobile.yml'
+  rpn_model_path: 'assets/mobile_faster_rcnn_rpn.pb'
+  rcnn_model_path: 'assets/mobile_faster_rcnn_rcnn.pb'
+  classes:
+  - 'background'
+  - 'head'
+  net: 'mobile'
+
+
+reognizer:
+  model_path: 'assets/cow_recognizer_917.pb'
+  image_size: 182
