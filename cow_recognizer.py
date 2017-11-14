@@ -119,13 +119,13 @@ class CowRecognizer():
     # higher is similar
     @staticmethod
     def convert2Score(distance, thredhold=1.0):
-        assert thredhold > 0 and thredhold < 2
+        assert thredhold > 0.5 and thredhold < 1.6
         assert distance >= 0
 
         if distance <= thredhold:
-            return int(100 -  50 * distance / thredhold)
+            return int(50 +  50 * (thredhold - distance) / (thredhold - 0.5))
         else:
-            return max(0, int(50 - 50 * (distance - thredhold)/(2 - thredhold)))
+            return max(0, int(50 - 50 * (distance - thredhold)/(1.6 - thredhold)))
 
 
 
