@@ -5,7 +5,6 @@ import sys
 import os
 import time
 import facenet
-import cv2
 
 S_SUCCESS = 0
 S_COW1_NO_HEAD = 1
@@ -48,8 +47,6 @@ class CowRecognizer():
                 right = np.minimum(right + delta, im_w)
             
             cropped = im[top:bottom, left:right,:]
-            # cv2.imshow('img', cropped)
-            # cv2.waitKey()
             return cropped
         except:
             print("Unexpected error:", sys.exc_info()[0])
@@ -76,7 +73,6 @@ class CowRecognizer():
             return image, None
 
         regions = self._detector.detect(image)
-        print(regions)
         if regions.has_key('head'):
             # select top 1 regions which has the highest score
             if len(regions['head']) > 0:
@@ -94,23 +90,21 @@ class CowRecognizer():
         # step 1, detect the cow head in the image
         start = time.time()
         head1, region1 = self.detectCowHead(image1)
-        print("Detection cow 1 cost time: {0}".format(time.time() - start))
+        # print("Detection cow 1 cost time: {0}".format(time.time() - start))
         if head1 is None:
             return S_COW1_NO_HEAD, None, None, None
 
-        detect_start = time.time()
+        # detect_start = time.time()
         head2, region2 = self.detectCowHead(image2)
-        print("Detection cow 2 cost time: {0}".format(time.time() - detect_start))
+        # print("Detection cow 2 cost time: {0}".format(time.time() - detect_start))
         if head2 is None:
             return S_COW2_NO_HEAD, None, None, None
 
-        extract_start = time.time()
+        # extract_start = time.time()
         features = self.extractFeatures([head1, head2])
-        print("Extract features cost time: {0}".format(time.time() - extract_start))
+        # print("Extract features cost time: {0}".format(time.time() - extract_start))
 
-        compare_start = time.time()
         dist = self.compareFeatures(features[0], features[1])
-        print("Compare features cost time: {0}".format(time.time() - compare_start))
 
         print("Total cost time: {0}".format(time.time() - start))
 
