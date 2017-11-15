@@ -57,8 +57,8 @@ recognizer = create_recognizer()
 status, distance, region1, region2 = recognizer.compareImageFiles(image1_path, image2_path)
 ```
 
-`status`: 0 success, 1 no cow head detect in image2, 2 no cow head detected in image2
-`distance`: float, distance of the two cow, must be >= 0.0, smaller the similar
+`status`: 0 success, 1 no cow head detect in image1, 2 no cow head detected in image2          
+`distance`: float, distance of the two cow, must be >= 0.0, smaller the similar       
 `region1` and `region2`: the region for the head in the image, format [left, top, right, bottom, score]
 
 If `status != 0` the `distance`, `region1` and `region2` is `None`!
@@ -83,11 +83,13 @@ The output is the same as `compareImageFiles`
 headImg, region = recognizer.detectCowHead(image)
 ```
 
-`headImg` the head image cropped from the cow image
-`region` head region in the cow image, format [left, top, right, bottom, score]
+Return the top 1 head detected in the image.        
+`headImg` the head image cropped from the cow image          
+`region` head region in the cow image, format [left, top, right, bottom, score]  
 
 
-### 1.5 Extract Features fFom Head Image
+### 1.5 Extract Features Fom Head Image List
+
 
 ```python
 headImgs = [headImg1, headImag2, ...]
@@ -109,6 +111,8 @@ Convert the distance of two cow head features to score in [0,100], the higher th
 ```python
 score = CowRecognizer.convert2Score(distance, thredhold=1.0)
 ```
+
+***Please set the thredhold carefully, recommend to use the thredhold base the the evalution reports***
 
 
 ## 2 Notes
