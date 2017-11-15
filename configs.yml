@@ -11,3 +11,4 @@ detector:
 reognizer:
   model_path: 'assets/cow_recognizer_947.pb'
   image_size: 182
+  compare_threshold: 1.12

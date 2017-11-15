@@ -28,10 +28,7 @@ class DecimalEncoder(json.JSONEncoder):
             return (str(o) for o in [o])
         return super(DecimalEncoder, self)._iterencode(o, markers)
 
-def create_recognizer(config_file_name='configs.yml'):
-    config_file = os.path.join(this_dir, config_file_name)
-    configs = yaml.load(open(config_file))
-
+def create_recognizer(configs):
     detector = None
     if configs.has_key('detector'):
         config_file_path = os.path.join(this_dir, configs['detector']['config_file_path'])
@@ -49,7 +46,9 @@ def create_recognizer(config_file_name='configs.yml'):
     recognizer = CowRecognizer(model_path, detector, image_size)
     return recognizer
 
-recognizer = create_recognizer()
+recognizer_configs = yaml.load(open(os.path.join(this_dir, 'configs.yml')))
+compare_threshold = recognizer_configs['reognizer']['compare_threshold']
+recognizer = create_recognizer(recognizer_configs)
 
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = config['server']['upload_folder']
@@ -98,7 +97,7 @@ def compareCows():
             # os.unlink(save_path1)
             pass
 
-    thredhold = 1.0
+    thredhold = compare_threshold
     if status == 0: # succuss
         score = CowRecognizer.convert2Score(distance, thredhold)
         result = {
