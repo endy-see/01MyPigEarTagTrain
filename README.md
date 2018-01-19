@@ -1,8 +1,9 @@
-# Cow Recognize 
+# Cow SDK 
 
 ## 1. API
+### 1.1 Recognizer
 
-### 1.1 Constructor
+#### 1.1.1 Constructor
 
 Create the cow recognizer from config files
 
@@ -51,7 +52,7 @@ recognizer = create_recognizer()
 ```
 
 
-### 1.2  Compare Cows From Image Files
+#### 1.1.2  Compare Cows From Image Files
 
 ```python
 status, distance, region1, region2 = recognizer.compareImageFiles(image1_path, image2_path)
@@ -64,7 +65,7 @@ status, distance, region1, region2 = recognizer.compareImageFiles(image1_path, i
 If `status != 0` the `distance`, `region1` and `region2` is `None`!
 
 
-### 1.3 Compare Cows From Image Objects
+#### 1.1.3 Compare Cows From Image Objects
 
 ```python
 from scipy import misc
@@ -77,7 +78,7 @@ return recognizer.compareImages(image1, image2)
 The output is the same as `compareImageFiles`
 
 
-### 1.4 Detect Cow Head
+#### 1.1.4 Detect Cow Head
 
 ```python
 headImg, region = recognizer.detectCowHead(image)
@@ -88,7 +89,7 @@ Return the top 1 head detected in the image.
 `region` head region in the cow image, format [left, top, right, bottom, score]  
 
 
-### 1.5 Extract Features Fom Head Image List
+#### 1.1.5 Extract Features Fom Head Image List
 
 
 ```python
@@ -97,15 +98,14 @@ features = recognizer.extractFeatures(headImgs)
 ```
 
 
-### 1.6 Count The Distance Between Two Head Features
+#### 1.1.6 Count The Distance Between Two Head Features
 
 ```python
 distance = recognizer.compareFeatures(features[0], features[1])
 ```
 
 
-### 1.7 Static Method: convert distance to score
-
+#### 1.1.7 Static Method: convert distance to score
 Convert the distance of two cow head features to score in [0,100], the higher the similar.
 
 ```python
@@ -114,6 +114,21 @@ score = CowRecognizer.convert2Score(distance, thredhold=1.0)
 
 ***Please set the thredhold carefully, recommend to use the thredhold base the the evalution reports***
 
+### 1.2 Cow Pose Detector
+
+#### 1.2.1 Create a Detector
+```python
+pose_detector=CowFacePosesDetector('cow_face_pose.pb') 
+```
+#### 1.2.1 Get Pose Score
+Pose score speicifies confidience score of if the cattle in input image has a valid front face view,the closer to 1 the better result we got.
+
+```python
+from PIL import Image
+image=Image.open(image_path)
+front_pose_score=pose_detector.DetectPose(image)
+```
+
 
 ## 2 Notes
 
@@ -121,4 +136,4 @@ score = CowRecognizer.convert2Score(distance, thredhold=1.0)
 1. 照片中最好只有一头牛，尽量减少出现多头牛的情况；     
 1. 奶牛在照片中不能太小，占照片总面积的30%-70%为佳；
 1. 照片分辨率最好不要低于：640*640， 牛头部分不要低于182*182
-1. 为了提高处理速度，照片大小控制在5M之内 或者1600*1600个像素内（非必须）  
+1. 为了提高处理速度，照片大小控制在5M之内 或者1600*1600个像素内（非必须） 
