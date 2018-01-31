@@ -1,7 +1,7 @@
 detector:
   config_file_path: 'assets/cow_detector_faster_rcnn_mobile.yml'
-  rpn_model_path: 'assets/mobile_1.0_faster_rcnn_rpn.pb'
-  rcnn_model_path: 'assets/mobile_1.0_faster_rcnn_rcnn.pb'
+  rpn_model_path: 'assets/mobile_0.5_faster_rcnn_rpn.pb'
+  rcnn_model_path: 'assets/mobile_0.5_faster_rcnn_rcnn.pb'
   classes:
   - 'background'
   - 'head'
@@ -9,6 +9,6 @@ detector:
 
 
 reognizer:
-  model_path: 'assets/cow_recognizer_947.pb'
+  model_path: 'assets/cow_recognizer_0121.pb'
   image_size: 182
-  compare_threshold: 1.12
+  compare_threshold: 1.03

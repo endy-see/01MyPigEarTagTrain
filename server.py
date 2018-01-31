@@ -7,6 +7,7 @@ import logging
 import yaml
 import uuid
 import base64
+from scipy import misc
 
 this_dir = os.path.dirname(os.path.abspath(__file__))
 lib_path = os.path.join(this_dir, 'faster_rcnn')
@@ -107,8 +108,8 @@ def compareCows():
             'region1': region1[:4],
             'region2': region2[:4]
         }
-        print(result)
-        app.logger.debug('End driver_license ocr, info: %s, request_id: %s', result, request_id)
+        #print(result)
+        app.logger.debug('End compareCows, info: %s, request_id: %s', result, request_id)
         # return jsonify({ 'status': 'OK', 'result': { 'region_info': region_info, 'info': texts } })
         return jsonify({ 'status': 'OK', 'result': result })
         # return simplejson.dumps(result, cls=DecimalJSONEncoder)
@@ -121,6 +122,45 @@ def compareCows():
     else:
         return jsonify({'status': 'NOT_RECOGNIZABLE'})
         app.logger.debug("Recognized nothing!")
+
+@app.route('/api/detect_face', methods=['POST'])
+def detect_face():
+    request_id = uuid.uuid1()
+    img = request.files.get('image_file')
+    if img is None:
+        return jsonify({'status': 'PARAMETER_ERROR', 'error': 'image_file param is required'}), 400
+
+    try:
+        name = "%s.jpg"%(request_id)
+        save_path = os.path.join(this_dir, app.config['UPLOAD_FOLDER'], name)
+        img.save(save_path)
+    except IOError as e:
+        app.logger.error('I/O error(%s): %s, request_id: %s', e.errno, e.strerror, request_id)
+        return jsonify({'status': 'SAVE_FILE_ERROR', 'error': e.strerror}), 500
+    except TypeError as e:
+        # if os.path.isfile(save_path):
+        #     os.unlink(save_path)
+        app.logger.error('TypeError: %s, request_id: %s', e, request_id)
+        return jsonify({'status': 'FILE_DECODE_ERROR', 'error': 'file content is invalid'}), 500
+
+    app.logger.debug('Begin detect_face, request_id: %s', request_id)
+
+    try:
+        oimg = misc.imread(os.path.expanduser(save_path))
+        _, region = recognizer.detectCowHead(oimg)
+    finally:
+        if os.path.isfile(save_path):
+            # os.unlink(save_path1)
+            pass
+
+    #print(region)
+    if region is None:
+        return jsonify({'status': 'NOT_RECOGNIZABLE'})
+        app.logger.debug("Recognized nothing!")
+
+    result = np.array(region).tolist()
+    app.logger.debug('End detect_face, info: %s, request_id: %s', result, request_id)
+    return jsonify({ 'status': 'OK', 'result': result })
 
 
 if __name__ == '__main__':
