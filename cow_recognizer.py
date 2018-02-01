@@ -52,6 +52,16 @@ class CowRecognizer():
         except:
             print("Unexpected error:", sys.exc_info()[0])
             return None
+
+    def detectCowHeads(self, image):
+        if self._detector is None:
+            return image, None
+
+        regions = self._detector.detect(image)
+        if regions.has_key('head'):    
+            if len(regions['head']) > 0:
+                return regions['head']
+        return None
     
     def extractFeatures(self, images):
         feedImages = []
