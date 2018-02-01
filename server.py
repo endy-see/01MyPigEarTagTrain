@@ -159,6 +159,7 @@ def detect_face():
         app.logger.debug("Recognized nothing!")
 
     result = np.array(region).tolist()
+    result = { 'face_rect': result[:4], 'confidence': result[4]}
     app.logger.debug('End detect_face, info: %s, request_id: %s', result, request_id)
     return jsonify({ 'status': 'OK', 'result': result })
 
