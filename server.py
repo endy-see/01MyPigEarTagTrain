@@ -147,7 +147,7 @@ def detect_face():
 
     try:
         oimg = misc.imread(os.path.expanduser(save_path))
-        _, region = recognizer.detectCowHead(oimg)
+        region = recognizer.detectCowHeads(oimg)
     finally:
         if os.path.isfile(save_path):
             # os.unlink(save_path1)
@@ -159,7 +159,6 @@ def detect_face():
         app.logger.debug("Recognized nothing!")
 
     result = np.array(region).tolist()
-    result = { 'face_rect': result[:4], 'confidence': result[4]}
     app.logger.debug('End detect_face, info: %s, request_id: %s', result, request_id)
     return jsonify({ 'status': 'OK', 'result': result })
 
