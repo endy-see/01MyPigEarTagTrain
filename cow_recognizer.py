@@ -55,7 +55,7 @@ class CowRecognizer():
 
     def detectCowHeads(self, image):
         if self._detector is None:
-            return image, None
+            return None
 
         regions = self._detector.detect(image)
         if regions.has_key('head'):    
