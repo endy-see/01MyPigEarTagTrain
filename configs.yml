@@ -8,14 +8,9 @@ detector:
   net: 'mobile'
 
 reognizer:
-  model_path: 'assets/cow_0301_3555.pb'
+  model_path: 'assets/cow_recognizer_4065.pb'
   image_size: 182
   compare_threshold: 0.99
-
-
-pose_detector:
-  model_path: 'assets/cow_face_pose.pb'
-
 
 face_aligner:
   model_path: 'assets/cow_face_landmarks.pb'

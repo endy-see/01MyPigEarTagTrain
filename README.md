@@ -1,6 +1,6 @@
 # Cow Recognize 
 
-## 1. API
+## 1.  Recognize API
 
 ### 1.1 Constructor
 
@@ -115,7 +115,43 @@ score = CowRecognizer.convert2Score(distance, thredhold=1.0)
 ***Please set the thredhold carefully, recommend to use the thredhold base the the evalution reports***
 
 
-## 2 Notes
+## 2.  Face Align API
+
+### 2.1 Constructor
+```python
+def create_aligner(config_file_name='configs.yml'):
+    this_dir=osp.dirname(osp.abspath(__file__))
+    config_file = osp.join(this_dir, config_file_name)
+    configs = yaml.load(open(config_file))
+    aligner=None
+    if configs.has_key('face_aligner'):
+        aligner_model_path = osp.join(this_dir, configs['face_aligner']['model_path'])
+        aligner=CowFaceAligner(aligner_model_path,182)
+
+    return aligner
+
+
+```
+
+### 2.2 Get Head Landmarks from Detected Head Image
+```python
+ landmarks = aligner.DetectLandmarks(head,head.size[0],head.size[1])
+
+```
+### 2.3 Get Aligned Head Image
+Positions of both eyes in dest aligned head image should be set according to landmark model. 
+ 
+```python
+aligned_head = aligner.AlignFace(head, landmarks,
+                                         eye_left_dest=(40, 65),
+                                         eye_right_dest=(142, 65)
+                                         )
+
+
+
+```
+
+## 3 Notes
 
 1. 尽可能的传奶牛正脸图片(能看到牛的两个眼睛为准）；     
 1. 照片中最好只有一头牛，尽量减少出现多头牛的情况；     
