@@ -1,9 +1,10 @@
 # coding=UTF-8
-import tensorflow as tf
-from tensorflow.python.platform import gfile
-from PIL import Image, ImageDraw
-import os
 import math
+
+import tensorflow as tf
+from PIL import Image
+from tensorflow.python.platform import gfile
+
 
 # Stores landmarks
 class Landmarks:
@@ -22,8 +23,8 @@ class Landmarks:
 
 class  CowFaceAligner():
 
-    def __init__(self,landmark_model_path):
-        self._image_size=182
+    def __init__(self,landmark_model_path,model_input_size=182):
+        self._model_input_size=model_input_size
         self._landmarks_count=12
         self._lower_margin_rate=0.1
         self._landmark_model_path=landmark_model_path
@@ -153,8 +154,8 @@ class  CowFaceAligner():
 
             prediction_result = self._sess.run(self._predictions, feed_dict={self._input: image})
 
-            scale_x=float(image_width)/182
-            scale_y= float(image_height) / 182
+            scale_x=float(image_width)/self._model_input_size
+            scale_y= float(image_height) / self._model_input_size
 
             kps=[]
             for index,value in enumerate(prediction_result):
@@ -178,7 +179,7 @@ class  CowFaceAligner():
 
 
     def AlignFace(self, image, landmarks, dest_sz=(182, 182),
-                  eye_left_dest=(15, 30), eye_right_dest=(167, 30)):
+                  eye_left_dest=(35, 55), eye_right_dest=(147, 55)):
         '''
         Align cattle face,eye_left_dest and eye_right_dest 
         must be symmetry in x axis and equal in y axis .
@@ -190,60 +191,64 @@ class  CowFaceAligner():
         :return: Aligned cattle face image.
         '''
 
-        if (eye_right_dest[0] <= eye_left_dest[0]):
+        try:
+            if (eye_right_dest[0] <= eye_left_dest[0]):
+                return None
+
+            if eye_right_dest[0] > dest_sz[0]:
+                return None
+
+            src_img_size = image.size[0]
+
+            eye_vector = self.__TupleMinus(landmarks.right_eye, landmarks.left_eye)
+
+            # Cal rotate angle.
+            rotation = -math.atan2(float(eye_vector[1]), float(eye_vector[0]))
+            cosin = math.cos(rotation)
+            sin = math.sin(rotation)
+
+            # Cal eye distance。
+            dist = self.__Distance(landmarks.left_eye, landmarks.right_eye)
+            dest_eye_distance = eye_right_dest[0] - eye_left_dest[0]
+            scale = float(dest_eye_distance) / dist
+
+            # Rotate with left eye as center
+            image = self.__ScaleRotateTranslate(image, center=landmarks.left_eye, angle=rotation, scale=1)
+
+            left_nose_dest_relative = self.__TupleMinus(landmarks.left_nose, landmarks.left_eye)
+            right_nose_dest_relative = self.__TupleMinus(landmarks.right_nose, landmarks.left_eye)
+
+
+            nose_left_dest = self.__TuplePlus((left_nose_dest_relative[0] * cosin - left_nose_dest_relative[1] * sin
+                                        , left_nose_dest_relative[0] * sin + left_nose_dest_relative[1] * cosin),
+                                              landmarks.left_eye)
+
+            nose_right_dest = self.__TuplePlus((right_nose_dest_relative[0] * cosin - right_nose_dest_relative[1] * sin
+                                         , right_nose_dest_relative[0] * sin + right_nose_dest_relative[1] * cosin),
+                                               landmarks.left_eye)
+
+            eye_right_caled = (landmarks.left_eye[0] + dist, landmarks.left_eye[1])
+
+            src_boarder_left = int(eye_left_dest[0] / scale)
+            src_boarder_right = int((dest_sz[0] - eye_right_dest[0]) / scale)
+            src_boarder_upper = (eye_left_dest[1] * (nose_left_dest[1] + src_img_size * self._lower_margin_rate - landmarks.left_eye[1])) \
+                                / (dest_sz[1] - eye_left_dest[1])
+            src_boarder_lower = int(src_img_size * self._lower_margin_rate)
+
+            # Cal face box
+            top_x = max(0, landmarks.left_eye[0] - src_boarder_left)
+            top_y = max(landmarks.left_eye[1] - src_boarder_upper, 0)
+            bottom_x = min(image.size[0], eye_right_caled[0] + src_boarder_right)
+            bottom_y = min(max(nose_right_dest[1], nose_left_dest[1]) + src_boarder_lower, image.size[1])
+
+            # Crop and resize
+            image = image.crop((int(top_x), int(top_y), int(bottom_x), int(bottom_y)))
+            image = image.resize(dest_sz, Image.ANTIALIAS)
+
+            return image
+
+        except:
             return None
-
-        if eye_right_dest[0] > dest_sz[0]:
-            return None
-
-        src_img_size = image.size[0]
-
-        eye_vector = self.__TupleMinus(landmarks.right_eye, landmarks.left_eye)
-
-        # Cal rotate angle.
-        rotation = -math.atan2(float(eye_vector[1]), float(eye_vector[0]))
-        cosin = math.cos(rotation)
-        sin = math.sin(rotation)
-
-        # Cal eye distance。
-        dist = self.__Distance(landmarks.left_eye, landmarks.right_eye)
-        dest_eye_distance = eye_right_dest[0] - eye_left_dest[0]
-        scale = float(dest_eye_distance) / dist
-
-        # Rotate with left eye as center
-        image = self.__ScaleRotateTranslate(image, center=landmarks.left_eye, angle=rotation, scale=1)
-
-        left_nose_dest_relative = self.__TupleMinus(landmarks.left_nose, landmarks.left_eye)
-        right_nose_dest_relative = self.__TupleMinus(landmarks.right_nose, landmarks.left_eye)
-
-
-        nose_left_dest = self.__TuplePlus((left_nose_dest_relative[0] * cosin - left_nose_dest_relative[1] * sin
-                                    , left_nose_dest_relative[0] * sin + left_nose_dest_relative[1] * cosin),
-                                          landmarks.left_eye)
-
-        nose_right_dest = self.__TuplePlus((right_nose_dest_relative[0] * cosin - right_nose_dest_relative[1] * sin
-                                     , right_nose_dest_relative[0] * sin + right_nose_dest_relative[1] * cosin),
-                                           landmarks.left_eye)
-
-        eye_right_caled = (landmarks.left_eye[0] + dist, landmarks.left_eye[1])
-
-        src_boarder_left = int(eye_left_dest[0] / scale)
-        src_boarder_right = int((dest_sz[0] - eye_right_dest[0]) / scale)
-        src_boarder_upper = (eye_left_dest[1] * (nose_left_dest[1] + src_img_size * self._lower_margin_rate - landmarks.left_eye[1])) \
-                            / (dest_sz[1] - eye_left_dest[1])
-        src_boarder_lower = int(src_img_size * self._lower_margin_rate)
-
-        # Cal face box
-        top_x = max(0, landmarks.left_eye[0] - src_boarder_left)
-        top_y = max(landmarks.left_eye[1] - src_boarder_upper, 0)
-        bottom_x = min(image.size[0], eye_right_caled[0] + src_boarder_right)
-        bottom_y = min(max(nose_right_dest[1], nose_left_dest[1]) + src_boarder_lower, image.size[1])
-
-        # Crop and resize
-        image = image.crop((int(top_x), int(top_y), int(bottom_x), int(bottom_y)))
-        image = image.resize(dest_sz, Image.ANTIALIAS)
-
-        return image
 
 
 if __name__=='__main__':
@@ -251,6 +256,7 @@ if __name__=='__main__':
     aligner=CowFaceAligner('frozen_face_align_model.pb')
     image=Image.open('/000001_U_01_fliped.jpg')
     landmarks=aligner.DetectLandmarks(image)
+    landmarks=aligner.Landmarks2KeyPoints(landmarks)
     aligned_image=aligner.AlignFace(image,landmarks)
     aligned_image.show()
     print 'lucky'
