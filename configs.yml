@@ -7,12 +7,10 @@ detector:
   - 'head'
   net: 'mobile'
 
-
 reognizer:
   model_path: 'assets/cow_0301_3555.pb'
   image_size: 182
   compare_threshold: 0.99
-
 
 
 pose_detector:
