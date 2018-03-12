@@ -93,12 +93,12 @@ def cow_verify(path1, path2):
     start = time.time()
     feature1, region1 = face_extract(path1)
     if feature1 is None:
-        return 1
+        return 1, None, None, None
 
     feature2, region2 = face_extract(path2)
     if feature2 is None:
-        return 2
-
+        return 2, None, None, None
+    
     dist = recognizer.compareFeatures(feature1, feature2)
     print("Total cost time: {0}".format(time.time() - start))
     return 0, dist, region1, region2
