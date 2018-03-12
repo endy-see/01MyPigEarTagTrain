@@ -1,11 +1,11 @@
 detector:
-  config_file_path: 'assets/cow_detector_faster_rcnn_mobile.yml'
-  rpn_model_path: 'assets/mobile_0.5_faster_rcnn_rpn.pb'
-  rcnn_model_path: 'assets/mobile_0.5_faster_rcnn_rcnn.pb'
+  config_file_path: 'assets/cow_detector_faster_rcnn.yml'
+  rpn_model_path: 'assets/res50_faster_rcnn_rpn.pb'
+  rcnn_model_path: 'assets/res50_faster_rcnn_rcnn.pb'
   classes:
   - 'background'
   - 'head'
-  net: 'mobile'
+  net: 'res50'
 
 reognizer:
   model_path: 'assets/cow_recognizer_4065.pb'

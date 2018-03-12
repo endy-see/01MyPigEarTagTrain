@@ -4,15 +4,19 @@ import decimal, simplejson
 import json
 import numpy as np
 import logging
+import time
 import yaml
 import uuid
 import base64
+from PIL import Image
+from scipy import misc
 
 this_dir = os.path.dirname(os.path.abspath(__file__))
 lib_path = os.path.join(this_dir, 'faster_rcnn')
 sys.path.insert(0, lib_path)
 
 from cow_recognizer import CowRecognizer
+from cow_face_aligner import CowFaceAligner
 import faster_rcnn.object_detector as FasterRCNN
 
 config_file = os.path.join(this_dir, './server.yml')
@@ -46,13 +50,54 @@ def create_recognizer(configs):
     recognizer = CowRecognizer(model_path, detector, image_size)
     return recognizer
 
-recognizer_configs = yaml.load(open(os.path.join(this_dir, 'configs.yml')))
-compare_threshold = recognizer_configs['reognizer']['compare_threshold']
-recognizer = create_recognizer(recognizer_configs)
+def create_aligner(configs):
+    aligner=None
+    if configs.has_key('face_aligner'):
+        aligner_model_path = os.path.join(this_dir, configs['face_aligner']['model_path'])
+        aligner=CowFaceAligner(aligner_model_path,182)
+
+    return aligner
+
+sdk_configs = yaml.load(open(os.path.join(this_dir, 'configs.yml')))
+compare_threshold = sdk_configs['reognizer']['compare_threshold']
+recognizer = create_recognizer(sdk_configs)
+aligner = create_aligner(sdk_configs)
 
 app = Flask(__name__)
-app.config['UPLOAD_FOLDER'] = config['server']['upload_folder']
+app.config['UPLOAD_FOLDER'] = server_config['upload_folder']
 app.logger.setLevel(logging.INFO)
+
+def face_extract(path):
+    image = misc.imread(path)
+    head, region = recognizer.detectCowHead(image)
+    if head is None:
+        return None, region
+    # misc image to pil
+    head = Image.fromarray(head)
+    # Detect cow face landmarks
+    landmarks = aligner.DetectLandmarks(head,head.size[0],head.size[1])
+    # Make align on face image
+    aligned_head = aligner.AlignFace(head, landmarks,eye_left_dest=(40, 65),eye_right_dest=(142, 65))
+    #pil image to misc
+    aligned_head=np.array(aligned_head)
+    # head feature extraction
+    feature = recognizer.extractFeatures([aligned_head])
+    
+    return feature, region
+
+def cow_verify(path1, path2):
+    start = time.time()
+    feature1, region1 = face_extract(path1)
+    if feature1 is None:
+        return 1
+
+    feature2, region2 = face_extract(path2)
+    if feature2 is None:
+        return 2
+
+    dist = recognizer.compareFeatures(feature1, feature2)
+    print("Total cost time: {0}".format(time.time() - start))
+    return 0, dist, region1, region2
 
 @app.route('/')
 def hello():
@@ -91,7 +136,8 @@ def compareCows():
     app.logger.debug('Begin compareCows, request_id: %s', request_id)
 
     try:
-        status, distance, region1, region2 = recognizer.compareImageFiles(save_path1, save_path2)
+        #status, distance, region1, region2 = recognizer.compareImageFiles(save_path1, save_path2)
+        status, distance, region1, region2 = cow_verify(save_path1, save_path2)
     finally:
         if os.path.isfile(save_path1):
             # os.unlink(save_path1)
@@ -107,7 +153,7 @@ def compareCows():
             'region1': region1[:4],
             'region2': region2[:4]
         }
-        print(result)
+        #print(result)
         app.logger.debug('End driver_license ocr, info: %s, request_id: %s', result, request_id)
         # return jsonify({ 'status': 'OK', 'result': { 'region_info': region_info, 'info': texts } })
         return jsonify({ 'status': 'OK', 'result': result })
