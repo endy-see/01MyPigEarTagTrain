@@ -32,7 +32,7 @@ class DecimalEncoder(json.JSONEncoder):
             return (str(o) for o in [o])
         return super(DecimalEncoder, self)._iterencode(o, markers)
 
-def create_recognizer(configs):
+def create_face_detector(configs):
     detector = None
     if configs.has_key('detector'):
         config_file_path = os.path.join(this_dir, configs['detector']['config_file_path'])
@@ -41,7 +41,10 @@ def create_recognizer(configs):
         detector = FasterRCNN.ObjectDetector(rpn_model_path, rcnn_model_path, config_file_path,
                                                 classes=configs['detector']['classes'],
                                                 net=configs['detector']['net'])
+    return detector
 
+def create_recognizer(configs):
+    detector = create_face_detector(configs)
 
     model_path = os.path.join(this_dir, configs['reognizer']['model_path'])
     image_size=182
@@ -61,6 +64,7 @@ def create_aligner(configs):
 sdk_configs = yaml.load(open(os.path.join(this_dir, 'configs.yml')))
 compare_threshold = sdk_configs['reognizer']['compare_threshold']
 recognizer = create_recognizer(sdk_configs)
+detector = create_face_detector(sdk_configs)
 aligner = create_aligner(sdk_configs)
 
 app = Flask(__name__)
@@ -170,6 +174,9 @@ def compareCows():
 
 @app.route('/api/detect_face', methods=['POST'])
 def detect_face():
+    if detector is None:
+        return jsonify({'status': 'SERVICE_UNAVAILABLE', 'error': 'detector not load'}), 503
+
     request_id = uuid.uuid1()
     img = request.files.get('image_file')
     if img is None:
@@ -191,19 +198,19 @@ def detect_face():
     app.logger.debug('Begin detect_face, request_id: %s', request_id)
 
     try:
-        oimg = misc.imread(os.path.expanduser(save_path))
-        _, region = recognizer.detectCowHead(oimg)
+        image = misc.imread(os.path.expanduser(save_path))
+        regions = detector.detect(image)
     finally:
         if os.path.isfile(save_path):
             # os.unlink(save_path1)
             pass
 
-    #print(region)
-    if region is None:
+    print(regions)
+    if regions is None or (regions.has_key('head') and len(regions['head']) < 1):
         return jsonify({'status': 'NOT_RECOGNIZABLE'})
         app.logger.debug("Recognized nothing!")
 
-    result = np.array(region).tolist()
+    result = np.array(regions['head']).tolist()
     app.logger.debug('End detect_face, info: %s, request_id: %s', result, request_id)
     return jsonify({ 'status': 'OK', 'result': result })
 
