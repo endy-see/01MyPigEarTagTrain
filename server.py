@@ -187,7 +187,7 @@ def detect_face():
         return jsonify({'status': 'PARAMETER_ERROR', 'error': 'image_file param is required'}), 400
 
     try:
-        name = "%s.jpg"%(request_id)
+        name = "%s"%(request_id) + get_suffix(img.filename)
         save_path = os.path.join(this_dir, app.config['UPLOAD_FOLDER'], name)
         img.save(save_path)
     except IOError as e:
