@@ -103,6 +103,10 @@ def cow_verify(path1, path2):
     print("Total cost time: {0}".format(time.time() - start))
     return 0, dist, region1, region2
 
+def get_suffix(filename):
+    suffix = '.' + filename.rsplit('.', 1)[1].lower() if len(filename.rsplit('.', 1)) == 2 else ''
+    return suffix
+
 @app.route('/')
 def hello():
     return jsonify({
@@ -111,7 +115,6 @@ def hello():
 
 @app.route('/api/compareCows', methods=['POST'])
 def compareCows():
-    
     request_id = uuid.uuid1()
     img1 = request.files.get('image1')
     if img1 is None:
@@ -122,11 +125,11 @@ def compareCows():
         return jsonify({'status': 'PARAMETER_ERROR', 'error': 'image2 param is required'}), 400
 
     try:
-        name1 = "%s_1."%(request_id) + img1.filename.rsplit('.', 1)[1].lower()
+        name1 = "%s_1"%(request_id) + get_suffix(img1.filename)
         save_path1 = os.path.join(this_dir, app.config['UPLOAD_FOLDER'], name1)
         img1.save(save_path1)
 
-        name2 = "%s_2."%(request_id) + img2.filename.rsplit('.', 1)[1].lower()
+        name2 = "%s_2"%(request_id) + get_suffix(img2.filename)
         save_path2 = os.path.join(this_dir, app.config['UPLOAD_FOLDER'], name2)
         img2.save(save_path2)
     except IOError as e:
