@@ -72,7 +72,7 @@ app.config['UPLOAD_FOLDER'] = server_config['upload_folder']
 app.logger.setLevel(logging.INFO)
 
 def face_extract(path):
-    image = misc.imread(path)
+    image = misc.imread(path, mode='RGB')
     head, region = recognizer.detectCowHead(image)
     if head is None:
         return None, region
@@ -111,6 +111,7 @@ def hello():
 
 @app.route('/api/compareCows', methods=['POST'])
 def compareCows():
+    
     request_id = uuid.uuid1()
     img1 = request.files.get('image1')
     if img1 is None:
@@ -121,11 +122,11 @@ def compareCows():
         return jsonify({'status': 'PARAMETER_ERROR', 'error': 'image2 param is required'}), 400
 
     try:
-        name1 = "%s_1.jpg"%(request_id)
+        name1 = "%s_1."%(request_id) + img1.filename.rsplit('.', 1)[1].lower()
         save_path1 = os.path.join(this_dir, app.config['UPLOAD_FOLDER'], name1)
         img1.save(save_path1)
 
-        name2 = "%s_2.jpg"%(request_id)
+        name2 = "%s_2."%(request_id) + img2.filename.rsplit('.', 1)[1].lower()
         save_path2 = os.path.join(this_dir, app.config['UPLOAD_FOLDER'], name2)
         img2.save(save_path2)
     except IOError as e:
@@ -198,11 +199,11 @@ def detect_face():
     app.logger.debug('Begin detect_face, request_id: %s', request_id)
 
     try:
-        image = misc.imread(os.path.expanduser(save_path))
+        image = misc.imread(os.path.expanduser(save_path), mode='RGB')
         regions = detector.detect(image)
     finally:
         if os.path.isfile(save_path):
-            # os.unlink(save_path1)
+            # os.unlink(save_path)
             pass
 
     print(regions)
