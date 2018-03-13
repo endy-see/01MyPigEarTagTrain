@@ -9,6 +9,7 @@ import yaml
 import uuid
 import base64
 from PIL import Image
+from PIL.ExifTags import TAGS
 from scipy import misc
 
 this_dir = os.path.dirname(os.path.abspath(__file__))
@@ -71,8 +72,52 @@ app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = server_config['upload_folder']
 app.logger.setLevel(logging.INFO)
 
+def rotate_image_with_ori(path):
+    image = Image.open(path)
+    exifdata = {}
+    if hasattr(image, '_getexif'):
+        info = image._getexif()
+        if info:
+            for (tag, value) in info.items():  
+                decoded = TAGS.get(tag, tag)  
+                exifdata[decoded] = value
+            #print(exifdata)
+    if exifdata.has_key('Orientation'):
+        print("Orientation: {0}".format(exifdata['Orientation']))
+        orientation = exifdata['Orientation']
+        if orientation == 1:
+            # Nothing
+            mirror = image.copy()
+        elif orientation == 2:
+            # Vertical Mirror
+            mirror = image.transpose(Image.FLIP_LEFT_RIGHT)
+        elif orientation == 3:
+            # Rotation 180
+            mirror = image.transpose(Image.ROTATE_180)
+        elif orientation == 4:
+            # Horizontal Mirror
+            mirror = image.transpose(Image.FLIP_TOP_BOTTOM)
+        elif orientation == 5:
+            # Horizontal Mirror + Rotation 90 CCW
+            mirror = image.transpose(Image.FLIP_TOP_BOTTOM).transpose(Image.ROTATE_90)
+        elif orientation == 6:
+            # Rotation 270
+            mirror = image.transpose(Image.ROTATE_270)
+        elif orientation == 7:
+            # Horizontal Mirror + Rotation 270
+            mirror = image.transpose(Image.FLIP_TOP_BOTTOM).transpose(Image.ROTATE_270)
+        elif orientation == 8:
+            # Rotation 90
+            mirror = image.transpose(Image.ROTATE_90)
+    else:
+        # No EXIF information, the user has to do it
+        mirror = image.copy()
+    return mirror
+
 def face_extract(path):
-    image = misc.imread(path, mode='RGB')
+    mirror = rotate_image_with_ori(path)
+    image = misc.fromimage(mirror, mode='RGB')
+    #image = misc.imread(path, mode='RGB')
     head, region = recognizer.detectCowHead(image)
     if head is None:
         return None, region
@@ -202,7 +247,9 @@ def detect_face():
     app.logger.debug('Begin detect_face, request_id: %s', request_id)
 
     try:
-        image = misc.imread(os.path.expanduser(save_path), mode='RGB')
+        im = rotate_image_with_ori(save_path)
+        image = misc.fromimage(im, mode='RGB')
+        #image = misc.imread(os.path.expanduser(save_path), mode='RGB')
         regions = detector.detect(image)
     finally:
         if os.path.isfile(save_path):
