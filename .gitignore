@@ -6,3 +6,6 @@ uploads
 .DS_Store/*
 *.pyc
 *.so
+result0609/
+result/
+result1/

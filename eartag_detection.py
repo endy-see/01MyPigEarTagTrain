@@ -118,7 +118,7 @@ def get_images(data_path):
 
 if __name__ == '__main__':
     # result_dir = './result/'
-    result_dir = './result1/'
+    result_dir = './result0609/'
     font = cv2.FONT_HERSHEY_SIMPLEX
 
     if len(sys.argv) > 1:

@@ -1,8 +1,13 @@
 detector:
-  config_file_path: 'assets/cow_detector_faster_rcnn.yml'
+  config_file_path: 'assets/0609_pigeartag.yml'
+  rpn_model_path: 'assets/0609_res50_faster_rcnn_rpn.pb'
+  rcnn_model_path: 'assets/0609_res50_faster_rcnn_rcnn.pb'
+
+#  config_file_path: 'assets/cow_detector_faster_rcnn.yml'
+#  rpn_model_path: 'assets/res50_faster_rcnn_rpn.pb'
+#  rcnn_model_path: 'assets/res50_faster_rcnn_rcnn.pb'
+
 #  config_file_path: 'assets/pigeartag-mobile.yml'
-  rpn_model_path: 'assets/res50_faster_rcnn_rpn.pb'
-  rcnn_model_path: 'assets/res50_faster_rcnn_rcnn.pb'
 #  rpn_model_path: 'assets/mobile_faster_rcnn_rpn.pb'
 #  rcnn_model_path: 'assets/mobile_faster_rcnn_rcnn.pb'
   classes:
